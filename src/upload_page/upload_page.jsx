@@ -2,9 +2,11 @@ import { CircularProgress, Grid } from "@mui/material";
 import { addDoc, collection, doc } from "firebase/firestore";
 import React, { useState } from "react";
 import { db } from "../firebase";
+import SharePage from "../share_screen/share_screen";
 const UploadPage = () => {
   const ref = collection(db, 'data');
   const [isUploading, setUploading] = useState(false);
+  const [name,setName]= useState();
   const check = (e) => {
     if(localStorage.getItem("name") === "" || localStorage.getItem("name") === null) {
       window.alert("Please enter your name or identification")
@@ -28,7 +30,9 @@ const UploadPage = () => {
   }
 
   return (
-    <Grid
+    <div className="">
+      
+      <Grid
       container
       spacing={0}
       direction="column"
@@ -38,15 +42,23 @@ const UploadPage = () => {
     >
       <Grid item xs={3}>
         <h1 style={{textAlign:'center'}}>UPLOAD</h1>
+        
         <p style={{textAlign:'center'}}>Enter Your Name (mandatory)</p>
-        <input type={'text'} name={"name"} onChange={(e) => { localStorage.setItem("name", e.currentTarget.value) }}></input>
+        <input type={'text'} name={"name"} onChange={(e) => { localStorage.setItem("name", e.currentTarget.value)
+        setName(e.target.value);
+       }}></input>
         <p style={{textAlign:'center'}}>Accepted File Type: Geojson</p>
         <input type={'file'} name={"CSV File"} onClick={check} onChange={handleFile}></input>
         {isUploading ? <CircularProgress /> : null}
       </Grid>
+      
     </Grid>
+    
+    </div>
+    
 
   );
+  
 }
 
 export default UploadPage;

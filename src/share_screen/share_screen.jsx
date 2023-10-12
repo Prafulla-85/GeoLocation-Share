@@ -9,7 +9,7 @@ import { async } from "@firebase/util";
 
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2F0ZW5kcmExMjQxIiwiYSI6ImNreGc2MjI5cjFwaTQyd3BkeGZ6NWVhMHUifQ.Wh1LgnYc3GQFGCJ7l-C2tQ';
 
-const SharePage = () => {
+const SharePage = (props) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const [lng, setLng] = useState(-70.9);
@@ -20,12 +20,13 @@ const SharePage = () => {
   const [key,setKey] = useState('');
   const [value,setValue] = useState('');
   const [curIdx,setCurIdx] = useState(0);
+  const [place,setPlace] = useState();
   // const [curFeature,setCurFeature] = useState(null);
   let path = window.location.href;
   let paths = path.split('/');
   const prefix = paths[paths.length - 1].split('?');
   let id = prefix[0];
-  
+  console.log(props.name);
   const ref = doc(db, 'data', id);
  
   const [data, setData] = useState(null);
@@ -40,16 +41,44 @@ const SharePage = () => {
     // setLng(document.data().features[0].geometry.coordinates[1]);
   }
   const update_properties = async ()=>{
+    
     setUploading(true);
-    // console.log(data['features'][curIdx],curIdx);
+    console.log(data['features'][curIdx],curIdx);
     data['features'][curIdx]['properties'][key] = value;
     await updateDoc(ref,data);
     setData(data);
     setKey('');
     setValue('');
     setUploading(false);
-    // console.log(data);
-  }
+  
+    var today = new Date();
+    const curTime = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds();
+    const date = today.getDate() + '-' + (today.getMonth() + 1) + '-' + today.getFullYear();
+    let item = {
+        Place: place,
+        Key: key,
+        Values: value,
+        Date: date,
+        Time: curTime,
+        
+      };
+  
+      var response = await fetch(
+        "https://api.apispreadsheets.com/data/xYag1lIPJJCGljgz/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            // Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify(item),
+        }
+      );
+      let result = await response.json();
+      console.log(result);
+    };
+  
 
   const add_layer = async (e)=>{
     console.log(e);
@@ -85,6 +114,7 @@ const SharePage = () => {
   useEffect(() => {
     initMap();
     load_data();
+    
   }, []);
 
   const html = `
@@ -103,6 +133,8 @@ const SharePage = () => {
     for(let i = 0;i<data.features.length;i++){
       let points = data.features[i];
       console.log(points);
+
+      setPlace(points.properties.name);
       const marker = new Marker().setLngLat(points.geometry.coordinates).addTo(map.current);
         marker.getElement().addEventListener('click', () => {
         setVisible(true);
@@ -161,6 +193,7 @@ const SharePage = () => {
                 zIndex:1000,
               }
               }>
+
               <CircularProgress/>
             </div>):null}
             <div style={{position:'absolute',zIndex:10,backgroundColor:'white',borderRadius:10,padding:'10px'}}>
@@ -194,7 +227,8 @@ const SharePage = () => {
                     })()
                   }
                   <div>
-                    <input type='text' placeholder="Key" onChange={(e)=>(setKey(e.target.value))} value={key}/>:<input type='text' placeholder="Value" onChange={(e)=>(setValue(e.target.value))} value={value}/><button onClick={update_properties}>+</button>
+                    <input type='text' placeholder="Key" onChange={(e)=>(setKey(e.target.value))} value={key}/>:<input type='text' placeholder="Value" onChange={(e)=>(setValue(e.target.value))} value={value}/>
+                    <button onClick={update_properties}>+</button>
                   </div>
                   {/* {isUploading?<CircularProgress/>:null} */}
                  
